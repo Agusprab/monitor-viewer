@@ -128,7 +128,7 @@ export default function VisitorsPage() {
 
   // Fungsi untuk sorting dan filtering data
   const getFilteredAndSortedVisitors = () => {
-    let filtered = visitors.filter(visitor =>
+    const filtered = visitors.filter(visitor =>
       visitor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       visitor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       visitor.no_tlp.includes(searchTerm) ||
@@ -136,15 +136,15 @@ export default function VisitorsPage() {
     )
 
     filtered.sort((a, b) => {
-      let aValue: any = a[sortField]
-      let bValue: any = b[sortField]
+      let aValue: string | number = a[sortField]
+      let bValue: string | number = b[sortField]
 
       if (sortField === 'created_at') {
-        aValue = new Date(aValue).getTime()
-        bValue = new Date(bValue).getTime()
+        aValue = new Date(aValue as string).getTime()
+        bValue = new Date(bValue as string).getTime()
       } else {
-        aValue = aValue.toLowerCase()
-        bValue = bValue.toLowerCase()
+        aValue = (aValue as string).toLowerCase()
+        bValue = (bValue as string).toLowerCase()
       }
 
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
