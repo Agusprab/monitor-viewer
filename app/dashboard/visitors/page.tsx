@@ -54,9 +54,7 @@ export default function VisitorsPage() {
   // State untuk select, edit, delete
   const [selectedVisitors, setSelectedVisitors] = useState<number[]>([])
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [editingVisitor, setEditingVisitor] = useState<import('../../../store/visitorsSlice').Visitor | null>(null)
-  const [deletingVisitorId, setDeletingVisitorId] = useState<number | null>(null)
   const [editForm, setEditForm] = useState({ name: '', email: '', no_tlp: '' })
 
   // Handlers
@@ -87,17 +85,8 @@ export default function VisitorsPage() {
     setIsEditModalOpen(true)
   }
 
-  const handleDelete = (id: number) => {
-    setDeletingVisitorId(id)
-    setIsDeleteModalOpen(true)
-  }
-
-  const confirmDelete = async () => {
-    if (deletingVisitorId) {
-      await dispatch(deleteVisitor(deletingVisitorId))
-      setIsDeleteModalOpen(false)
-      setDeletingVisitorId(null)
-    }
+  const handleDelete = async (id: number) => {
+    await dispatch(deleteVisitor(id))
   }
 
   const handleBulkDelete = async () => {
@@ -486,38 +475,6 @@ export default function VisitorsPage() {
                 className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition-colors"
               >
                 Simpan Perubahan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 text-center">
-              <div className="w-16 h-16 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Hapus Data?</h3>
-              <p className="text-slate-500 text-sm">
-                Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.
-              </p>
-            </div>
-            
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-3">
-              <button
-                onClick={() => setIsDeleteModalOpen(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-white transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 shadow-sm shadow-red-200 transition-colors"
-              >
-                Ya, Hapus
               </button>
             </div>
           </div>

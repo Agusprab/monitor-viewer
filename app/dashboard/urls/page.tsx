@@ -18,6 +18,8 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   FileSpreadsheet,
   FileText,
   Pencil,
@@ -35,12 +37,15 @@ export default function UrlsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
+  // State untuk search dan sorting
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sortField, setSortField] = useState<'ip' | 'url_input' | 'created_at'>('created_at')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+
   // State untuk select, edit, delete
   const [selectedUrlVisitors, setSelectedUrlVisitors] = useState<number[]>([])
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [editingUrlVisitor, setEditingUrlVisitor] = useState<UrlVisitor | null>(null)
-  const [deletingUrlVisitorId, setDeletingUrlVisitorId] = useState<number | null>(null)
   const [editForm, setEditForm] = useState({ ip: '', url_input: '' })
 
   useEffect(() => {
@@ -75,17 +80,8 @@ export default function UrlsPage() {
     setIsEditModalOpen(true)
   }
 
-  const handleDelete = (id: number) => {
-    setDeletingUrlVisitorId(id)
-    setIsDeleteModalOpen(true)
-  }
-
-  const confirmDelete = async () => {
-    if (deletingUrlVisitorId) {
-      await dispatch(deleteUrlVisitor(deletingUrlVisitorId))
-      setIsDeleteModalOpen(false)
-      setDeletingUrlVisitorId(null)
-    }
+  const handleDelete = async (id: number) => {
+    await dispatch(deleteUrlVisitor(id))
   }
 
   const handleBulkDelete = async () => {
@@ -103,8 +99,47 @@ export default function UrlsPage() {
     }
   }
 
-  const totalPages = Math.ceil(urlVisitors.length / itemsPerPage)
-  const paginatedUrls = urlVisitors.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  // Handler untuk sorting
+  const handleSort = (field: 'ip' | 'url_input' | 'created_at') => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+    setCurrentPage(1) // Reset ke halaman pertama saat sorting
+  }
+
+  // Fungsi untuk sorting dan filtering data
+  const getFilteredAndSortedUrls = () => {
+    const filtered = urlVisitors.filter(urlVisitor =>
+      urlVisitor.ip.includes(searchTerm) ||
+      urlVisitor.url_input.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+
+    filtered.sort((a, b) => {
+      let aValue: string | number = a[sortField]
+      let bValue: string | number = b[sortField]
+
+      if (sortField === 'created_at') {
+        aValue = new Date(aValue as string).getTime()
+        bValue = new Date(bValue as string).getTime()
+      } else {
+        aValue = (aValue as string).toLowerCase()
+        bValue = (bValue as string).toLowerCase()
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+      return 0
+    })
+
+    return filtered
+  }
+
+  const filteredAndSortedUrls = getFilteredAndSortedUrls()
+  const totalPages = Math.ceil(filteredAndSortedUrls.length / itemsPerPage)
+  const paginatedUrls = filteredAndSortedUrls.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -123,7 +158,9 @@ export default function UrlsPage() {
             </div>
             <div>
               <h3 className="font-bold text-slate-900">Data URL Visitor</h3>
-              <p className="text-sm text-slate-500">Total {urlVisitors.length} URL</p>
+              <p className="text-sm text-slate-500">
+                {searchTerm ? `Menampilkan ${filteredAndSortedUrls.length} dari ${urlVisitors.length} URL` : `Total ${urlVisitors.length} URL`}
+              </p>
             </div>
           </div>
 
@@ -143,6 +180,27 @@ export default function UrlsPage() {
                 <div className="w-px h-6 bg-slate-200 mx-1" />
               </div>
             )}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Cari IP atau URL..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  setCurrentPage(1) // Reset ke halaman pertama saat search
+                }}
+                className="pl-10 pr-4 py-2 w-80 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
@@ -200,9 +258,39 @@ export default function UrlsPage() {
                     )}
                   </button>
                 </th>
-                <th className="px-6 py-4">IP Address</th>
-                <th className="px-6 py-4">URL</th>
-                <th className="px-6 py-4 text-right">Visited At</th>
+                <th className="px-6 py-4">
+                  <button 
+                    onClick={() => handleSort('ip')}
+                    className="flex items-center gap-1 hover:text-slate-700 transition-colors"
+                  >
+                    IP Address
+                    {sortField === 'ip' && (
+                      sortDirection === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                    )}
+                  </button>
+                </th>
+                <th className="px-6 py-4">
+                  <button 
+                    onClick={() => handleSort('url_input')}
+                    className="flex items-center gap-1 hover:text-slate-700 transition-colors"
+                  >
+                    URL
+                    {sortField === 'url_input' && (
+                      sortDirection === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                    )}
+                  </button>
+                </th>
+                <th className="px-6 py-4 text-right">
+                  <button 
+                    onClick={() => handleSort('created_at')}
+                    className="flex items-center gap-1 hover:text-slate-700 transition-colors ml-auto"
+                  >
+                    Visited At
+                    {sortField === 'created_at' && (
+                      sortDirection === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                    )}
+                  </button>
+                </th>
                 <th className='px-6 py-4'>Action</th>
               </tr>
             </thead>
@@ -361,38 +449,6 @@ export default function UrlsPage() {
                 className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition-colors"
               >
                 Simpan Perubahan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 text-center">
-              <div className="w-16 h-16 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Hapus Data?</h3>
-              <p className="text-slate-500 text-sm">
-                Apakah Anda yakin ingin menghapus data URL visitor ini? Tindakan ini tidak dapat dibatalkan.
-              </p>
-            </div>
-            
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-3">
-              <button
-                onClick={() => setIsDeleteModalOpen(false)}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-white transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 shadow-sm shadow-red-200 transition-colors"
-              >
-                Ya, Hapus
               </button>
             </div>
           </div>
