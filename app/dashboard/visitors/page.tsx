@@ -42,6 +42,8 @@ export default function VisitorsPage() {
     dispatch(fetchUrlVisitors())
   }, [dispatch])
 
+  console.log("visitor:", visitors)
+
   const [currentPageVisitors, setCurrentPageVisitors] = useState(1)
   const [currentPageUrls, setCurrentPageUrls] = useState(1)
   const itemsPerPage = 10
@@ -121,7 +123,8 @@ export default function VisitorsPage() {
       visitor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       visitor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       visitor.no_tlp.includes(searchTerm) ||
-      visitor.ip.includes(searchTerm)
+      visitor.ip.includes(searchTerm) ||
+      (visitor as any).url_visitor?.some((u: any) => u.url_input.toLowerCase().includes(searchTerm.toLowerCase()))
     )
 
     filtered.sort((a, b) => {
@@ -229,6 +232,7 @@ export default function VisitorsPage() {
                     Email: v.email,
                     'No. Telp': v.no_tlp,
                     'IP Address': v.ip,
+                    'URLs': (v as any).url_visitor?.map((u: any) => u.url_input).join(', ') || '',
                     'Registered At': v.created_at
                   })))
                   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -247,14 +251,61 @@ export default function VisitorsPage() {
               </button>
               <button
                 onClick={() => {
-                  const doc = new jsPDF.jsPDF()
+                  const doc = new jsPDF.jsPDF({ orientation: 'landscape' })
+                  
+                  // Add Title
+                  doc.setFontSize(18)
+                  doc.setTextColor(30, 41, 59) // slate-800
+                  doc.text('Laporan Data Pengunjung', 14, 15)
+                  
+                  // Add Subtitle/Date
+                  doc.setFontSize(10)
+                  doc.setTextColor(100, 116, 139) // slate-500
+                  doc.text(`Diekspor pada: ${new Date().toLocaleString('id-ID')}`, 14, 22)
+
                   autoTable(doc, {
-                    head: [['Nama', 'Email', 'No. Telp', 'IP Address', 'Registered At']],
-                    body: visitors.map(v => [v.name, v.email, v.no_tlp, v.ip, v.created_at]),
-                    startY: 20
+                    head: [['Nama', 'Email', 'No. Telp', 'IP Address', 'URLs', 'Registered At']],
+                    body: visitors.map(v => [
+                      v.name, 
+                      v.email, 
+                      v.no_tlp, 
+                      v.ip, 
+                      (v as any).url_visitor?.map((u: any) => u.url_input.replace(/^https?:\/\//, '')).join('\n') || '-', 
+                      new Date(v.created_at).toLocaleString('id-ID', { 
+                        day: '2-digit', 
+                        month: 'short', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })
+                    ]),
+                    startY: 30,
+                    styles: {
+                      fontSize: 8,
+                      cellPadding: 3,
+                    },
+                    headStyles: {
+                      fillColor: [79, 70, 229], // indigo-600
+                      textColor: [255, 255, 255],
+                      fontStyle: 'bold',
+                    },
+                    alternateRowStyles: {
+                      fillColor: [248, 250, 252], // slate-50
+                    },
+                    columnStyles: {
+                      0: { fontStyle: 'bold', textColor: [15, 23, 42] }, // name
+                      4: { cellWidth: 80 }, // URLs column wider
+                    },
+                    margin: { top: 30 },
+                    didDrawPage: (data) => {
+                      // Footer: Page Number
+                      const str = `Halaman ${data.pageNumber}`
+                      doc.setFontSize(8)
+                      doc.setTextColor(148, 163, 184)
+                      doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10)
+                    }
                   })
-                  doc.text('Data Visitor', 14, 14)
-                  doc.save('visitors.pdf')
+                  doc.save(`visitors-report-${new Date().getTime()}.pdf`)
                 }}
                 title="Export to PDF"
                 className="p-2.5 rounded-xl border border-slate-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-200 transition-all"
@@ -314,6 +365,11 @@ export default function VisitorsPage() {
                     )}
                   </button>
                 </th>
+                <th className="px-6 py-4">
+                  <div className="flex items-center gap-1">
+                    URL 
+                  </div>
+                </th>
                 <th className="px-6 py-4 text-right">
                   <button 
                     onClick={() => handleSort('created_at')}
@@ -356,6 +412,30 @@ export default function VisitorsPage() {
                     <span className="inline-flex items-center px-2 py-1 rounded-md bg-slate-100 text-slate-700 font-mono text-xs">
                       {v.ip}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1 max-w-[200px]">
+                      {v.url_visitor && v.url_visitor.length > 0 ? (
+                        v.url_visitor.map((url: any, idx: number) => (
+                          <a 
+                            key={idx} 
+                            href={url.url_input}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-medium border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                            title={url.url_input}
+                          >
+                            <Globe className="h-2.5 w-2.5 mr-1" />
+                            <span className="truncate max-w-[100px]">
+                              {url.url_input.replace(/^https?:\/\//, '').split('/')[0]}
+                            </span>
+                            <ExternalLink className="h-2 w-2 ml-1 opacity-50" />
+                          </a>
+                        ))
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">No URL recorded</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="text-sm text-slate-900">

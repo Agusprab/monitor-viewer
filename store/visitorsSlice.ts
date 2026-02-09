@@ -1,6 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { createSupabaseClient } from '@/lib/supabase'
 
+export interface UrlVisitor {
+  id: number
+  url_input: string
+  visitor_id: number
+}
+
 export interface Visitor {
   id: number
   name: string
@@ -8,6 +14,7 @@ export interface Visitor {
   no_tlp: string
   ip: string
   created_at: string
+  url_visitor?: UrlVisitor[]
 }
 
 interface VisitorsState {
@@ -27,7 +34,7 @@ export const fetchVisitors = createAsyncThunk('visitors/fetchVisitors', async (_
     const supabase = createSupabaseClient()
     const { data, error } = await supabase
       .from('visitor')
-      .select('id,name,email,no_tlp,ip,created_at')
+      .select('id,name,email,no_tlp,ip,created_at, url_visitor(id,url_input, visitor_id)')
       .order('created_at', { ascending: false })
       .limit(100)
     if (error) throw error

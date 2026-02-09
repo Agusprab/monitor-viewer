@@ -339,8 +339,20 @@ export default function UrlsPage() {
                           {u.ip}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-medium">
-                        {u.url_input}
+                      <td className="px-6 py-4">
+                        <a 
+                          href={u.url_input}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-5 py-2 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-medium border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                          title={u.url_input}
+                        >
+                          <Globe className="h-2.5 w-2.5 mr-1" />
+                          <span className="truncate max-w-[100px] ">
+                            {u.url_input.replace(/^https?:\/\//, '').split('/')[0]}
+                          </span>
+                          <ExternalLink className="h-2 w-2 ml-1 opacity-50" />
+                        </a>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="text-sm text-slate-900">
