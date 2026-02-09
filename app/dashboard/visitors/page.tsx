@@ -6,15 +6,12 @@ import * as jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { useAppSelector, useAppDispatch } from '../../../store/hooks'
 import { fetchVisitors, updateVisitor, deleteVisitor, bulkDeleteVisitors } from '../../../store/visitorsSlice'
-import { fetchUrlVisitors } from '../../../store/urlVisitorsSlice'
 import type { RootState } from '../../../store'
+import type { Visitor, UrlVisitor } from '../../../store/visitorsSlice'
 import { 
   Users, 
   Globe, 
-  Calendar, 
   Search, 
-  Filter,
-  ArrowRight,
   ExternalLink,
   ChevronLeft,
   ChevronRight,
@@ -34,18 +31,15 @@ import {
 export default function VisitorsPage() {
   const dispatch = useAppDispatch()
   const visitors = useAppSelector((state: RootState) => state.visitors.data)
-  const urlVisitors = useAppSelector((state: RootState) => state.urlVisitors.data)
-  const loading = useAppSelector((state: RootState) => state.visitors.loading || state.urlVisitors.loading)
+  const loading = useAppSelector((state: RootState) => state.visitors.loading)
 
   useEffect(() => {
     dispatch(fetchVisitors())
-    dispatch(fetchUrlVisitors())
   }, [dispatch])
 
   console.log("visitor:", visitors)
 
   const [currentPageVisitors, setCurrentPageVisitors] = useState(1)
-  const [currentPageUrls, setCurrentPageUrls] = useState(1)
   const itemsPerPage = 10
 
   // State untuk search dan sorting
@@ -56,7 +50,7 @@ export default function VisitorsPage() {
   // State untuk select, edit, delete
   const [selectedVisitors, setSelectedVisitors] = useState<number[]>([])
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [editingVisitor, setEditingVisitor] = useState<import('../../../store/visitorsSlice').Visitor | null>(null)
+  const [editingVisitor, setEditingVisitor] = useState<Visitor | null>(null)
   const [editForm, setEditForm] = useState({ name: '', email: '', no_tlp: '' })
 
   // Handlers
@@ -117,14 +111,13 @@ export default function VisitorsPage() {
     setCurrentPageVisitors(1) // Reset ke halaman pertama saat sorting
   }
 
-  // Fungsi untuk sorting dan filtering data
   const getFilteredAndSortedVisitors = () => {
     const filtered = visitors.filter(visitor =>
       visitor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       visitor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       visitor.no_tlp.includes(searchTerm) ||
       visitor.ip.includes(searchTerm) ||
-      (visitor as any).url_visitor?.some((u: any) => u.url_input.toLowerCase().includes(searchTerm.toLowerCase()))
+      visitor.url_visitor?.some(u => u.url_input.toLowerCase().includes(searchTerm.toLowerCase()))
     )
 
     filtered.sort((a, b) => {
@@ -150,9 +143,6 @@ export default function VisitorsPage() {
   const filteredAndSortedVisitors = getFilteredAndSortedVisitors()
   const totalPagesVisitors = Math.ceil(filteredAndSortedVisitors.length / itemsPerPage)
   const paginatedVisitors = filteredAndSortedVisitors.slice((currentPageVisitors - 1) * itemsPerPage, currentPageVisitors * itemsPerPage)
-
-  const totalPagesUrls = Math.ceil(urlVisitors.length / itemsPerPage)
-  const paginatedUrls = urlVisitors.slice((currentPageUrls - 1) * itemsPerPage, currentPageUrls * itemsPerPage)
 
   if (loading) {
     return (
@@ -232,7 +222,7 @@ export default function VisitorsPage() {
                     Email: v.email,
                     'No. Telp': v.no_tlp,
                     'IP Address': v.ip,
-                    'URLs': (v as any).url_visitor?.map((u: any) => u.url_input).join(', ') || '',
+                    'URLs': v.url_visitor?.map(u => u.url_input).join(', ') || '',
                     'Registered At': v.created_at
                   })))
                   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -270,7 +260,7 @@ export default function VisitorsPage() {
                       v.email, 
                       v.no_tlp, 
                       v.ip, 
-                      (v as any).url_visitor?.map((u: any) => u.url_input.replace(/^https?:\/\//, '')).join('\n') || '-', 
+                      v.url_visitor?.map(u => u.url_input.replace(/^https?:\/\//, '')).join('\n') || '-', 
                       new Date(v.created_at).toLocaleString('id-ID', { 
                         day: '2-digit', 
                         month: 'short', 
@@ -385,7 +375,7 @@ export default function VisitorsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {paginatedVisitors.map((v: import('../../../store/visitorsSlice').Visitor) => {
+              {paginatedVisitors.map((v: Visitor) => {
                 const isSelected = selectedVisitors.includes(v.id)
                 return (
                   <tr 
@@ -414,9 +404,9 @@ export default function VisitorsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1 max-w-[200px]">
+                    <div className="flex flex-wrap gap-1 max-w-50">
                       {v.url_visitor && v.url_visitor.length > 0 ? (
-                        v.url_visitor.map((url: any, idx: number) => (
+                        v.url_visitor.map((url: UrlVisitor, idx: number) => (
                           <a 
                             key={idx} 
                             href={url.url_input}
@@ -426,7 +416,7 @@ export default function VisitorsPage() {
                             title={url.url_input}
                           >
                             <Globe className="h-2.5 w-2.5 mr-1" />
-                            <span className="truncate max-w-[100px]">
+                            <span className="truncate max-w-25">
                               {url.url_input.replace(/^https?:\/\//, '').split('/')[0]}
                             </span>
                             <ExternalLink className="h-2 w-2 ml-1 opacity-50" />

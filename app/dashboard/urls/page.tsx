@@ -9,12 +9,8 @@ import { fetchUrlVisitors, updateUrlVisitor, deleteUrlVisitor, bulkDeleteUrlVisi
 import type { UrlVisitor } from '../../../store/urlVisitorsSlice'
 
 import { 
-  Users, 
   Globe, 
-  Calendar, 
   Search, 
-  Filter,
-  ArrowRight,
   ExternalLink,
   ChevronLeft,
   ChevronRight,
@@ -348,7 +344,7 @@ export default function UrlsPage() {
                           title={u.url_input}
                         >
                           <Globe className="h-2.5 w-2.5 mr-1" />
-                          <span className="truncate max-w-[100px] ">
+                          <span className="truncate max-w-25 ">
                             {u.url_input.replace(/^https?:\/\//, '').split('/')[0]}
                           </span>
                           <ExternalLink className="h-2 w-2 ml-1 opacity-50" />

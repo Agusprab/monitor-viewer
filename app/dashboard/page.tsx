@@ -8,12 +8,10 @@ import { fetchUrlVisitors } from '../../store/urlVisitorsSlice'
 import type { Visitor } from '../../store/visitorsSlice'
 import type { UrlVisitor } from '../../store/urlVisitorsSlice'
 import { 
-  Users, 
   Globe, 
   MousePointer2, 
   Calendar,
   TrendingUp,
-  ArrowUpRight,
   UserCheck,
   Clock
 } from 'lucide-react'
@@ -25,8 +23,6 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  BarChart,
-  Bar,
   Cell,
   PieChart,
   Pie

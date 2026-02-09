@@ -2,13 +2,12 @@
 
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { 
   LayoutDashboard, 
   Users, 
-  Settings, 
   LogOut, 
-  Activity,
   ChevronRight,
   Globe,
   X
@@ -74,7 +73,14 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
       )}>
         <div className="flex h-20 items-center justify-between px-8 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <img src="/assets/images/logo-essentials.gif" alt="Logo Essentials" className="w-24 h-24 "/>
+            <Image 
+              src="/assets/images/logo-essentials.gif" 
+              alt="Logo Essentials" 
+              width={96} 
+              height={96} 
+              className="w-24 h-24"
+              unoptimized
+            />
           </div>
           <button
             onClick={closeSidebar}
