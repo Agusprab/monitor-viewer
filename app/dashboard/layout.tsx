@@ -33,7 +33,7 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen bg-[#f8fafc]">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-      <div className="flex-1 flex flex-col min-h-screen relative overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-screen relative overflow-hidden md:ml-72">
         {/* Background gradient effect */}
         <div className="absolute top-0 left-0 w-full h-75 bg-linear-to-b from-indigo-50/50 to-transparent pointer-events-none" />
         <main className="flex-1 relative z-10 p-8">

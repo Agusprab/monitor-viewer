@@ -67,7 +67,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
       )}
       <div className={cn(
         "flex h-screen w-72 flex-col bg-white border-r border-slate-200 transition-transform duration-300 ease-in-out",
-        "md:relative md:translate-x-0",
+        "md:translate-x-0",
         isOpen ? "translate-x-0" : "-translate-x-full",
         "fixed inset-y-0 left-0 z-50 md:z-auto"
       )}>
